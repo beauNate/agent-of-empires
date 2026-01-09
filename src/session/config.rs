@@ -2,7 +2,6 @@
 
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
 
@@ -21,12 +20,6 @@ pub struct Config {
 
     #[serde(default)]
     pub updates: UpdatesConfig,
-
-    #[serde(default)]
-    pub mcp_pool: McpPoolConfig,
-
-    #[serde(default)]
-    pub mcps: HashMap<String, McpConfig>,
 }
 
 fn default_profile() -> String {
@@ -77,39 +70,6 @@ fn default_true() -> bool {
 
 fn default_check_interval() -> u64 {
     24
-}
-
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct McpPoolConfig {
-    #[serde(default)]
-    pub enabled: bool,
-
-    #[serde(default)]
-    pub pool_all: bool,
-
-    #[serde(default)]
-    pub exclude_mcps: Vec<String>,
-}
-
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct McpConfig {
-    #[serde(default)]
-    pub command: Option<String>,
-
-    #[serde(default)]
-    pub args: Vec<String>,
-
-    #[serde(default)]
-    pub env: HashMap<String, String>,
-
-    #[serde(default)]
-    pub url: Option<String>,
-
-    #[serde(default)]
-    pub transport: Option<String>,
-
-    #[serde(default)]
-    pub description: Option<String>,
 }
 
 fn config_path() -> Result<PathBuf> {

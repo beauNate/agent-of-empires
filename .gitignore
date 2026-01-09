@@ -31,6 +31,4 @@ Thumbs.db
 .serena/
 
 # Personal/local files
-.mcp.json
-.playwright-mcp/
 *.screenstudio/

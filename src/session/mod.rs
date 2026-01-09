@@ -4,7 +4,6 @@ pub mod claude;
 pub mod config;
 mod groups;
 mod instance;
-pub mod mcp;
 mod storage;
 
 pub use config::*;

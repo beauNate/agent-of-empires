@@ -267,7 +267,7 @@ pub async fn run(args: UninstallArgs) -> Result<()> {
 
     println!();
     println!("Thank you for using Agent of Empires!");
-    println!("Feedback: https://github.com/nbrake/agent-of-empires/issues");
+    println!("Feedback: https://github.com/njbrake/agent-of-empires/issues");
 
     Ok(())
 }

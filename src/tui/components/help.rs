@@ -55,7 +55,6 @@ impl HelpOverlay {
                     ("d", "Delete session/group"),
                     ("r", "Refresh"),
                     ("f", "Fork session (Claude)"),
-                    ("M", "MCP Manager"),
                 ],
             ),
             (

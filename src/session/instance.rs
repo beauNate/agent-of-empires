@@ -3,7 +3,6 @@
 use anyhow::Result;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use std::path::Path;
 use uuid::Uuid;
 
 use crate::tmux;
@@ -44,17 +43,11 @@ pub struct Instance {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub claude_detected_at: Option<DateTime<Utc>>,
 
-    // MCP tracking
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub loaded_mcp_names: Vec<String>,
-
     // Runtime state (not serialized)
     #[serde(skip)]
     pub last_error_check: Option<std::time::Instant>,
     #[serde(skip)]
     pub last_start_time: Option<std::time::Instant>,
-    #[serde(skip)]
-    pub skip_mcp_regenerate: bool,
 }
 
 impl Instance {
@@ -72,10 +65,8 @@ impl Instance {
             last_accessed_at: None,
             claude_session_id: None,
             claude_detected_at: None,
-            loaded_mcp_names: Vec::new(),
             last_error_check: None,
             last_start_time: None,
-            skip_mcp_regenerate: false,
         }
     }
 
@@ -95,7 +86,11 @@ impl Instance {
         }
 
         let cmd = if self.command.is_empty() {
-            None
+            if self.tool == "claude" {
+                Some("claude")
+            } else {
+                None
+            }
         } else {
             Some(self.command.as_str())
         };
@@ -116,16 +111,6 @@ impl Instance {
 
         // Small delay to ensure tmux cleanup
         std::thread::sleep(std::time::Duration::from_millis(100));
-
-        // Regenerate MCP config if needed
-        if !self.skip_mcp_regenerate && self.tool == "claude" {
-            let path = Path::new(&self.project_path);
-            if let Ok(mcps) = super::mcp::get_attached_mcps(&self.project_path) {
-                let _ = super::mcp::write_mcp_json(path, &mcps);
-                self.loaded_mcp_names = mcps;
-            }
-        }
-        self.skip_mcp_regenerate = false;
 
         self.start()
     }

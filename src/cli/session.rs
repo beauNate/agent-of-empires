@@ -14,7 +14,7 @@ pub enum SessionCommands {
     /// Stop session process
     Stop(SessionIdArgs),
 
-    /// Restart session (reload MCPs)
+    /// Restart session
     Restart(SessionIdArgs),
 
     /// Fork Claude session with context

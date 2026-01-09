@@ -28,10 +28,6 @@ pub struct AddArgs {
     #[arg(short = 'P', long)]
     parent: Option<String>,
 
-    /// MCPs to attach (can specify multiple times)
-    #[arg(long = "mcp")]
-    mcps: Vec<String>,
-
     /// Launch the session immediately after creating
     #[arg(short = 'l', long)]
     launch: bool,
@@ -108,17 +104,6 @@ pub async fn run(profile: &str, args: AddArgs) -> Result<()> {
 
     storage.save_with_groups(&instances, &group_tree)?;
 
-    // Handle MCP attachment
-    if !args.mcps.is_empty() {
-        let available_mcps = crate::session::mcp::get_available_mcps()?;
-        for mcp_name in &args.mcps {
-            if !available_mcps.contains_key(mcp_name) {
-                bail!("MCP '{}' not found in config.toml", mcp_name);
-            }
-        }
-        crate::session::mcp::write_mcp_json(&path, &args.mcps)?;
-    }
-
     println!("✓ Added session: {}", final_title);
     println!("  Profile: {}", storage.profile());
     println!("  Path:    {}", path.display());
@@ -126,9 +111,6 @@ pub async fn run(profile: &str, args: AddArgs) -> Result<()> {
     println!("  ID:      {}", instance.id);
     if let Some(cmd) = &args.command {
         println!("  Cmd:     {}", cmd);
-    }
-    if !args.mcps.is_empty() {
-        println!("  MCPs:    {}", args.mcps.join(", "));
     }
     if let Some(parent) = &args.parent {
         println!("  Parent:  {}", parent);

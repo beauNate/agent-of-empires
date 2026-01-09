@@ -7,7 +7,6 @@
 - `src/cli/`: clap command handlers (e.g., `src/cli/add.rs`, `src/cli/session.rs`).
 - `src/tui/`: ratatui UI and input handling.
 - `src/session/`, `src/tmux/`: session storage + tmux integration and status detection.
-- `src/mcppool/`, `src/update/`, `src/process/`, `src/platform/`: MCP management, self-update, process detection, OS-specific helpers.
 - `tests/`: integration tests (`tests/*.rs`). `target/` is build output.
 
 ## Build, Test, and Development Commands

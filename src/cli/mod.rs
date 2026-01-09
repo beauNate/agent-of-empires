@@ -3,13 +3,11 @@
 pub mod add;
 pub mod group;
 pub mod list;
-pub mod mcp;
 pub mod profile;
 pub mod remove;
 pub mod session;
 pub mod status;
 pub mod uninstall;
-pub mod update;
 
 use crate::session::Instance;
 use anyhow::{bail, Result};

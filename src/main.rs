@@ -4,7 +4,6 @@ use anyhow::Result;
 use clap::{Parser, Subcommand};
 
 mod cli;
-mod mcppool;
 mod process;
 mod session;
 mod tmux;
@@ -48,12 +47,6 @@ enum Commands {
         command: cli::session::SessionCommands,
     },
 
-    /// Manage MCP servers
-    Mcp {
-        #[command(subcommand)]
-        command: cli::mcp::McpCommands,
-    },
-
     /// Manage groups
     Group {
         #[command(subcommand)]
@@ -65,9 +58,6 @@ enum Commands {
         #[command(subcommand)]
         command: Option<cli::profile::ProfileCommands>,
     },
-
-    /// Check for and install updates
-    Update(cli::update::UpdateArgs),
 
     /// Uninstall Agent of Empires
     Uninstall(cli::uninstall::UninstallArgs),
@@ -91,10 +81,8 @@ async fn main() -> Result<()> {
         Some(Commands::Remove(args)) => cli::remove::run(&profile, args).await,
         Some(Commands::Status(args)) => cli::status::run(&profile, args).await,
         Some(Commands::Session { command }) => cli::session::run(&profile, command).await,
-        Some(Commands::Mcp { command }) => cli::mcp::run(&profile, command).await,
         Some(Commands::Group { command }) => cli::group::run(&profile, command).await,
         Some(Commands::Profile { command }) => cli::profile::run(command).await,
-        Some(Commands::Update(args)) => cli::update::run(args).await,
         Some(Commands::Uninstall(args)) => cli::uninstall::run(args).await,
         None => {
             // Launch TUI

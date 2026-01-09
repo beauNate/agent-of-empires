@@ -1,10 +1,30 @@
-# Agent of Empires
+# Agent of Empires (aoe)
 
-A terminal session manager for AI coding agents, written in Rust.
+A terminal session manager using tmux to aid in management and monitoring of AI coding agents, written in Rust.
+
+This project was inspired by [agent-deck](https://github.com/asheshgoplani/agent-deck) (Go + Bubble Tea), but written in Rust with a simplified architecture and extended functionality.
+
+## Installation
+
+### Homebrew (macOS and Linux)
+
+```bash
+brew tap njbrake/aoe
+brew install aoe
+```
+
+Or clone and build:
+
+```bash
+git clone https://github.com/njbrake/agent-of-empires
+cd agent-of-empires
+cargo build --release
+# Binary at target/release/aoe
+```
 
 ## How It Works
 
-Agent of Empires is a wrapper around [tmux](https://github.com/tmux/tmux/wiki), the terminal multiplexer. Each AI coding session you create is actually a tmux session under the hood.
+Agent of Empires (aoe) is a wrapper around [tmux](https://github.com/tmux/tmux/wiki), the terminal multiplexer. Each AI coding session you create is actually a tmux session under the hood.
 
 Once you attach to a session, you're working directly in tmux. Basic tmux knowledge helps:
 
@@ -17,41 +37,6 @@ Once you attach to a session, you're working directly in tmux. Basic tmux knowle
 
 If you're new to tmux, the key thing to remember is `Ctrl+b d` to detach and return to the TUI.
 
-## Installation
-
-### Homebrew (macOS and Linux)
-
-```bash
-brew tap njbrake/aoe
-brew install aoe
-```
-
-### From GitHub Releases
-
-Download the latest release for your platform from the [releases page](https://github.com/njbrake/agent-of-empires/releases).
-
-```bash
-# Example for macOS ARM64
-curl -LO https://github.com/njbrake/agent-of-empires/releases/latest/download/aoe-darwin-arm64.tar.gz
-tar -xzf aoe-darwin-arm64.tar.gz
-sudo mv aoe-darwin-arm64 /usr/local/bin/aoe
-```
-
-### From Source
-
-```bash
-cargo install --git https://github.com/njbrake/agent-of-empires
-```
-
-Or clone and build:
-
-```bash
-git clone https://github.com/njbrake/agent-of-empires
-cd agent-of-empires
-cargo build --release
-# Binary at target/release/aoe
-```
-
 ## Features
 
 - **TUI Dashboard** - Visual interface to manage all your AI coding sessions
@@ -59,7 +44,6 @@ cargo build --release
 - **Group Organization** - Organize sessions into hierarchical folders
 - **Status Detection** - Automatic status detection for Claude Code and OpenCode
 - **tmux Integration** - Sessions persist in tmux for reliability
-- **MCP Server Management** - Configure and manage Model Context Protocol servers
 - **Multi-profile Support** - Separate workspaces for different projects
 
 ## Requirements
@@ -155,11 +139,6 @@ aoe group delete <name>     # Delete a group
 aoe profile list            # List profiles
 aoe profile create <name>   # Create a profile
 aoe profile delete <name>   # Delete a profile
-
-# MCP servers
-aoe mcp list                # List configured MCP servers
-aoe mcp attach <name>       # Attach MCP to current session
-aoe mcp detach <name>       # Detach MCP from current session
 
 # Maintenance
 aoe update                  # Check for updates

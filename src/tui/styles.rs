@@ -29,11 +29,34 @@ pub struct Theme {
 
 impl Default for Theme {
     fn default() -> Self {
-        Self::tokyo_night()
+        Self::phosphor()
     }
 }
 
 impl Theme {
+    pub fn phosphor() -> Self {
+        Self {
+            background: Color::Rgb(16, 20, 18),
+            border: Color::Rgb(45, 70, 55),
+            selection: Color::Rgb(30, 50, 40),
+
+            title: Color::Rgb(57, 255, 20),
+            text: Color::Rgb(180, 255, 180),
+            dimmed: Color::Rgb(80, 120, 90),
+            hint: Color::Rgb(100, 160, 120),
+
+            running: Color::Rgb(57, 255, 20),
+            waiting: Color::Rgb(200, 255, 100),
+            idle: Color::Rgb(60, 100, 70),
+            error: Color::Rgb(255, 100, 80),
+
+            group: Color::Rgb(100, 220, 160),
+            search: Color::Rgb(180, 255, 200),
+            accent: Color::Rgb(57, 255, 20),
+        }
+    }
+
+    #[allow(dead_code)]
     pub fn tokyo_night() -> Self {
         Self {
             background: Color::Rgb(26, 27, 38),
