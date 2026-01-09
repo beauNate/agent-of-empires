@@ -4,6 +4,8 @@ A terminal session manager using tmux to aid in management and monitoring of AI 
 
 This project was inspired by [agent-deck](https://github.com/asheshgoplani/agent-deck) (Go + Bubble Tea), but written in Rust with a simplified architecture and extended functionality.
 
+![Agent of Empires TUI](assets/tui.png)
+
 ## Installation
 
 ### Homebrew (macOS and Linux)
