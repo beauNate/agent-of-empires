@@ -132,6 +132,9 @@ impl HomeView {
 
     pub fn set_instance_error(&mut self, id: &str, error: Option<String>) {
         if let Some(inst) = self.instance_map.get_mut(id) {
+            inst.last_error = error.clone();
+        }
+        if let Some(inst) = self.instances.iter_mut().find(|i| i.id == id) {
             inst.last_error = error;
         }
     }
@@ -258,10 +261,30 @@ impl HomeView {
             }
             KeyCode::Char('d') => {
                 if let Some(session_id) = &self.selected_session {
-                    // Check if this session has a worktree
                     let (title, message) = if let Some(inst) = self.instance_map.get(session_id) {
-                        if let Some(wt_info) = &inst.worktree_info {
-                            if wt_info.managed_by_aoe && wt_info.cleanup_on_delete {
+                        let has_worktree = inst
+                            .worktree_info
+                            .as_ref()
+                            .is_some_and(|wt| wt.managed_by_aoe && wt.cleanup_on_delete);
+                        let has_sandbox = inst.sandbox_info.as_ref().is_some_and(|s| s.enabled);
+
+                        match (has_worktree, has_sandbox) {
+                            (true, true) => {
+                                let wt_info = inst.worktree_info.as_ref().unwrap();
+                                let sandbox = inst.sandbox_info.as_ref().unwrap();
+                                (
+                                    "Delete Session, Worktree & Container",
+                                    format!(
+                                        "WARNING: This will permanently delete:\n\n\
+                                        Worktree: {}\n\
+                                        Branch: {}\n\n\
+                                        Docker container: {}",
+                                        inst.project_path, wt_info.branch, sandbox.container_name
+                                    ),
+                                )
+                            }
+                            (true, false) => {
+                                let wt_info = inst.worktree_info.as_ref().unwrap();
                                 (
                                     "Delete Session & Worktree",
                                     format!(
@@ -271,17 +294,22 @@ impl HomeView {
                                         inst.project_path, wt_info.branch
                                     ),
                                 )
-                            } else {
+                            }
+                            (false, true) => {
+                                let sandbox = inst.sandbox_info.as_ref().unwrap();
                                 (
-                                    "Delete Session",
-                                    "Are you sure you want to delete this session?".to_string(),
+                                    "Delete Session & Container",
+                                    format!(
+                                        "WARNING: This will remove the Docker container:\n\n\
+                                        Container: {}",
+                                        sandbox.container_name
+                                    ),
                                 )
                             }
-                        } else {
-                            (
+                            (false, false) => (
                                 "Delete Session",
                                 "Are you sure you want to delete this session?".to_string(),
-                            )
+                            ),
                         }
                     } else {
                         (
@@ -461,6 +489,19 @@ impl HomeView {
         use chrono::Utc;
         use std::path::PathBuf;
 
+        if data.sandbox {
+            if !crate::docker::is_docker_available() {
+                anyhow::bail!(
+                    "Docker is not installed. Please install Docker to use sandbox mode."
+                );
+            }
+            if !crate::docker::is_daemon_running() {
+                anyhow::bail!(
+                    "Docker daemon is not running. Please start Docker to use sandbox mode."
+                );
+            }
+        }
+
         let mut final_path = data.path.clone();
         let mut worktree_info_opt = None;
 
@@ -511,6 +552,20 @@ impl HomeView {
             instance.worktree_info = Some(worktree_info);
         }
 
+        if data.sandbox {
+            use crate::docker::DockerContainer;
+            use crate::session::SandboxInfo;
+
+            let container_name = DockerContainer::generate_name(&instance.id);
+            instance.sandbox_info = Some(SandboxInfo {
+                enabled: true,
+                container_id: None,
+                image: None,
+                container_name,
+                created_at: None,
+            });
+        }
+
         let session_id = instance.id.clone();
         self.instances.push(instance.clone());
         self.group_tree = GroupTree::new_with_groups(&self.instances, &self.groups);
@@ -540,7 +595,16 @@ impl HomeView {
 
                         if let Ok(git_wt) = GitWorktree::new(main_repo) {
                             let _ = git_wt.remove_worktree(&worktree_path, false);
-                            // Silently fail - worktree removal is best-effort in TUI
+                        }
+                    }
+                }
+
+                // Handle container cleanup
+                if let Some(sandbox) = &inst.sandbox_info {
+                    if sandbox.enabled {
+                        let container = crate::docker::DockerContainer::from_session_id(&inst.id);
+                        if container.exists().unwrap_or(false) {
+                            let _ = container.remove(true);
                         }
                     }
                 }
@@ -764,6 +828,12 @@ impl HomeView {
                     line_spans.push(Span::styled(
                         format!("  {}", wt_info.branch),
                         Style::default().fg(Color::Cyan),
+                    ));
+                }
+                if inst.is_sandboxed() {
+                    line_spans.push(Span::styled(
+                        " [sandbox]",
+                        Style::default().fg(Color::Magenta),
                     ));
                 }
             }
