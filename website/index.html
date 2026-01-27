@@ -398,7 +398,7 @@
 
   <script>
     function copyInstall() {
-      const cmd = 'curl -fsSL https://agentofempires.com/install.sh | bash';
+      const cmd = 'curl -fsSL https://raw.githubusercontent.com/njbrake/agent-of-empires/main/scripts/install.sh | bash';
       navigator.clipboard.writeText(cmd).then(() => {
         const btn = document.getElementById('copy-btn');
         btn.innerHTML = '<svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>';
