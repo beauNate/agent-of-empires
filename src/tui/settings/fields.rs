@@ -404,11 +404,12 @@ fn build_session_fields(
         session.map(|s| s.default_tool.is_some()).unwrap_or(false),
     );
 
-    // Map tool name to selected index: 0=Auto (first available), 1=claude, 2=opencode, 3=codex
+    // Map tool name to selected index: 0=Auto, 1=claude, 2=opencode, 3=vibe, 4=codex
     let selected = match default_tool.as_deref() {
         Some("claude") => 1,
         Some("opencode") => 2,
-        Some("codex") => 3,
+        Some("vibe") => 3,
+        Some("codex") => 4,
         _ => 0, // Auto (use first available)
     };
 
@@ -422,6 +423,7 @@ fn build_session_fields(
                 "Auto (first available)".into(),
                 "claude".into(),
                 "opencode".into(),
+                "vibe".into(),
                 "codex".into(),
             ],
         },
@@ -486,7 +488,8 @@ fn apply_field_to_global(field: &SettingField, config: &mut Config) {
             config.session.default_tool = match selected {
                 1 => Some("claude".to_string()),
                 2 => Some("opencode".to_string()),
-                3 => Some("codex".to_string()),
+                3 => Some("vibe".to_string()),
+                4 => Some("codex".to_string()),
                 _ => None, // Auto
             };
         }
@@ -615,7 +618,8 @@ fn apply_field_to_profile(field: &SettingField, global: &Config, config: &mut Pr
             let tool = match selected {
                 1 => Some("claude".to_string()),
                 2 => Some("opencode".to_string()),
-                3 => Some("codex".to_string()),
+                3 => Some("vibe".to_string()),
+                4 => Some("codex".to_string()),
                 _ => None, // Auto
             };
             // Compare with global and set/clear override accordingly
@@ -723,5 +727,54 @@ mod tests {
             check_enabled_field.has_override,
             "Profile SHOULD show override after explicit profile change"
         );
+    }
+
+    #[test]
+    fn test_default_tool_options_include_all_supported_tools() {
+        use crate::session::SUPPORTED_TOOLS;
+
+        let global = Config::default();
+        let profile = ProfileConfig::default();
+
+        let fields = build_fields_for_category(
+            SettingsCategory::Session,
+            SettingsScope::Global,
+            &global,
+            &profile,
+        );
+
+        let tool_field = fields
+            .iter()
+            .find(|f| f.key == FieldKey::DefaultTool)
+            .expect("DefaultTool field should exist");
+
+        let options = match &tool_field.value {
+            FieldValue::Select { options, .. } => options,
+            _ => panic!("DefaultTool should be a Select field"),
+        };
+
+        // First option is "Auto (first available)", rest should be tool names
+        let tool_options: Vec<&str> = options.iter().skip(1).map(|s| s.as_str()).collect();
+
+        for tool in SUPPORTED_TOOLS {
+            assert!(
+                tool_options.contains(tool),
+                "Settings UI missing tool '{}'. Update default_tool_fields() in fields.rs \
+                 when adding new tools. Supported tools: {:?}, UI options: {:?}",
+                tool,
+                SUPPORTED_TOOLS,
+                tool_options
+            );
+        }
+
+        // Also verify we don't have extra unknown tools in the UI
+        for option in &tool_options {
+            assert!(
+                SUPPORTED_TOOLS.contains(option),
+                "Settings UI has unknown tool '{}' not in SUPPORTED_TOOLS. \
+                 Either add to SUPPORTED_TOOLS or remove from UI.",
+                option
+            );
+        }
     }
 }

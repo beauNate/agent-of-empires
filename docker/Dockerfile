@@ -1,5 +1,5 @@
 # aoe-sandbox: Docker image for Agent of Empires sandbox sessions
-# This image provides Claude Code, OpenCode, and Codex CLI in an isolated environment
+# This image provides Claude Code, OpenCode, Mistral Vibe, and Codex CLI in an isolated environment
 
 FROM ubuntu:24.04
 
@@ -39,10 +39,15 @@ ENV PATH="/root/.opencode/bin:${PATH}"
 # Install Codex CLI (OpenAI)
 RUN npm install -g @openai/codex
 
+# Install Mistral Vibe
+RUN curl -LsSf https://mistral.ai/vibe/install.sh | bash
+ENV PATH="/root/.vibe/bin:${PATH}"
+
 # Create directories for credential mounts
 RUN mkdir -p /root/.claude \
     /root/.config/opencode \
     /root/.local/share/opencode \
+    /root/.vibe \
     /root/.codex \
     /root/.ssh
 

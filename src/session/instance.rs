@@ -7,7 +7,7 @@ use uuid::Uuid;
 
 use crate::docker::{
     self, ContainerConfig, DockerContainer, VolumeMount, CLAUDE_AUTH_VOLUME, CODEX_AUTH_VOLUME,
-    OPENCODE_AUTH_VOLUME,
+    OPENCODE_AUTH_VOLUME, VIBE_AUTH_VOLUME,
 };
 use crate::tmux;
 
@@ -162,6 +162,7 @@ impl Instance {
             match self.tool.as_str() {
                 "claude" => "claude",
                 "opencode" => "opencode",
+                "vibe" => "vibe",
                 "codex" => "codex",
                 _ => "bash",
             }
@@ -235,6 +236,7 @@ impl Instance {
             let tool_cmd = if self.is_yolo_mode() {
                 match self.tool.as_str() {
                     "claude" => "claude --dangerously-skip-permissions".to_string(),
+                    "vibe" => "vibe --auto-approve".to_string(),
                     "codex" => "codex --dangerously-bypass-approvals-and-sandbox".to_string(),
                     _ => self.get_tool_command().to_string(),
                 }
@@ -248,6 +250,7 @@ impl Instance {
         } else if self.command.is_empty() {
             match self.tool.as_str() {
                 "claude" => Some(wrap_command_ignore_suspend("claude")),
+                "vibe" => Some(wrap_command_ignore_suspend("vibe")),
                 "codex" => Some(wrap_command_ignore_suspend("codex")),
                 _ => None,
             }
@@ -328,6 +331,7 @@ impl Instance {
 
         docker::ensure_named_volume(CLAUDE_AUTH_VOLUME)?;
         docker::ensure_named_volume(OPENCODE_AUTH_VOLUME)?;
+        docker::ensure_named_volume(VIBE_AUTH_VOLUME)?;
         docker::ensure_named_volume(CODEX_AUTH_VOLUME)?;
 
         crate::migrations::run_lazy_docker_migrations();
@@ -389,6 +393,15 @@ impl Instance {
             });
         }
 
+        let vibe_config = home.join(".vibe");
+        if vibe_config.exists() {
+            volumes.push(VolumeMount {
+                host_path: vibe_config.to_string_lossy().to_string(),
+                container_path: format!("{}/.vibe", CONTAINER_HOME),
+                read_only: true,
+            });
+        }
+
         let named_volumes = vec![
             (
                 CLAUDE_AUTH_VOLUME.to_string(),
@@ -397,6 +410,10 @@ impl Instance {
             (
                 OPENCODE_AUTH_VOLUME.to_string(),
                 format!("{}/.local/share/opencode", CONTAINER_HOME),
+            ),
+            (
+                VIBE_AUTH_VOLUME.to_string(),
+                format!("{}/.vibe", CONTAINER_HOME),
             ),
             (
                 CODEX_AUTH_VOLUME.to_string(),
@@ -556,11 +573,20 @@ fn wrap_command_ignore_suspend(cmd: &str) -> String {
     format!("bash -c 'stty susp undef; exec {}'", cmd)
 }
 
+/// All supported coding tools.
+/// When adding a new tool, update:
+/// - This constant
+/// - `detect_tool()` in cli/add.rs
+/// - `detect_status_from_content()` in tmux/status_detection.rs
+/// - `default_tool_fields()` in tui/settings/fields.rs (options list and match statements)
+/// - `apply_field_to_global()` and `apply_field_to_profile()` in tui/settings/fields.rs
+pub const SUPPORTED_TOOLS: &[&str] = &["claude", "opencode", "vibe", "codex"];
+
 /// Tools that have YOLO mode support configured.
 /// When adding a new tool, add it here and implement YOLO support in:
-/// - `start()` for command construction (Claude and Codex use CLI flags)
+/// - `start()` for command construction (Claude uses CLI flag, Vibe uses --auto-approve, Codex uses CLI flag)
 /// - `build_container_config()` for environment variables (OpenCode uses env var)
-pub const YOLO_SUPPORTED_TOOLS: &[&str] = &["claude", "opencode", "codex"];
+pub const YOLO_SUPPORTED_TOOLS: &[&str] = &["claude", "opencode", "vibe", "codex"];
 
 #[cfg(test)]
 mod tests {
@@ -593,6 +619,7 @@ mod tests {
         let available_tools = crate::tmux::AvailableTools {
             claude: true,
             opencode: true,
+            vibe: true,
             codex: true,
         };
         for tool in available_tools.available_list() {

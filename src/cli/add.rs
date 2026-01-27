@@ -21,7 +21,7 @@ pub struct AddArgs {
     #[arg(short = 'g', long)]
     group: Option<String>,
 
-    /// Command to run (e.g., 'claude', 'opencode', 'codex')
+    /// Command to run (e.g., 'claude', 'opencode', 'vibe', 'codex')
     #[arg(short = 'c', long = "cmd")]
     command: Option<String>,
 
@@ -158,7 +158,7 @@ pub async fn run(profile: &str, args: AddArgs) -> Result<()> {
 
     if let Some(cmd) = &args.command {
         instance.command = cmd.clone();
-        instance.tool = detect_tool(cmd);
+        instance.tool = detect_tool(cmd)?;
     }
 
     if let Some(worktree_info) = worktree_info_opt {
@@ -273,17 +273,22 @@ pub fn generate_unique_title(instances: &[Instance], base_title: &str, path: &st
     format!("{} ({})", base_title, chrono::Utc::now().timestamp())
 }
 
-fn detect_tool(cmd: &str) -> String {
+fn detect_tool(cmd: &str) -> Result<String> {
     let cmd_lower = cmd.to_lowercase();
     if cmd_lower.is_empty() || cmd_lower.contains("claude") {
-        "claude".to_string()
+        Ok("claude".to_string())
     } else if cmd_lower.contains("opencode") || cmd_lower.contains("open-code") {
-        "opencode".to_string()
+        Ok("opencode".to_string())
+    } else if cmd_lower.contains("vibe") || cmd_lower.contains("mistral-vibe") {
+        Ok("vibe".to_string())
     } else if cmd_lower.contains("codex") {
-        "codex".to_string()
-    } else if cmd_lower.contains("cursor") {
-        "cursor".to_string()
+        Ok("codex".to_string())
     } else {
-        "shell".to_string()
+        bail!(
+            "Unknown tool in command: {}\n\
+             Supported tools: claude, opencode, vibe, codex\n\
+             Tip: Command must contain one of the supported tool names",
+            cmd
+        )
     }
 }

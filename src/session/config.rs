@@ -49,7 +49,7 @@ pub struct AppStateConfig {
 /// Session-related configuration defaults
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct SessionConfig {
-    /// Default coding tool for new sessions (claude, opencode, codex)
+    /// Default coding tool for new sessions (claude, opencode, vibe, codex)
     /// If not set or tool is unavailable, falls back to first available tool
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub default_tool: Option<String>,
