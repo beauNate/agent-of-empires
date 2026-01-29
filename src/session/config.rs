@@ -34,6 +34,9 @@ pub struct Config {
     pub session: SessionConfig,
 
     #[serde(default)]
+    pub diff: DiffConfig,
+
+    #[serde(default)]
     pub app_state: AppStateConfig,
 }
 
@@ -53,6 +56,32 @@ pub struct SessionConfig {
     /// If not set or tool is unavailable, falls back to first available tool
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub default_tool: Option<String>,
+}
+
+/// Diff view configuration
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DiffConfig {
+    /// Default branch to compare against (e.g., "main", "master")
+    /// If not set, will try to auto-detect from the repository
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub default_branch: Option<String>,
+
+    /// Number of context lines to show around changes
+    #[serde(default = "default_context_lines")]
+    pub context_lines: usize,
+}
+
+impl Default for DiffConfig {
+    fn default() -> Self {
+        Self {
+            default_branch: None,
+            context_lines: 3,
+        }
+    }
+}
+
+fn default_context_lines() -> usize {
+    3
 }
 
 fn default_profile() -> String {
@@ -716,5 +745,44 @@ mod tests {
         let config: Config = toml::from_str(toml).unwrap();
         assert_eq!(config.tmux.status_bar, TmuxStatusBarMode::Enabled);
         assert_eq!(config.tmux.mouse, TmuxMouseMode::Enabled);
+    }
+
+    // Tests for DiffConfig
+    #[test]
+    fn test_diff_config_default() {
+        let diff = DiffConfig::default();
+        assert!(diff.default_branch.is_none());
+        assert_eq!(diff.context_lines, 3);
+    }
+
+    #[test]
+    fn test_diff_config_deserialize() {
+        let toml = r#"
+            default_branch = "main"
+            context_lines = 5
+        "#;
+        let diff: DiffConfig = toml::from_str(toml).unwrap();
+        assert_eq!(diff.default_branch, Some("main".to_string()));
+        assert_eq!(diff.context_lines, 5);
+    }
+
+    #[test]
+    fn test_diff_config_partial_deserialize() {
+        let toml = r#"default_branch = "develop""#;
+        let diff: DiffConfig = toml::from_str(toml).unwrap();
+        assert_eq!(diff.default_branch, Some("develop".to_string()));
+        assert_eq!(diff.context_lines, 3);
+    }
+
+    #[test]
+    fn test_diff_config_in_full_config() {
+        let toml = r#"
+            [diff]
+            default_branch = "main"
+            context_lines = 10
+        "#;
+        let config: Config = toml::from_str(toml).unwrap();
+        assert_eq!(config.diff.default_branch, Some("main".to_string()));
+        assert_eq!(config.diff.context_lines, 10);
     }
 }

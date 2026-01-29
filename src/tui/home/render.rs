@@ -33,6 +33,15 @@ impl HomeView {
             return;
         }
 
+        // Diff view takes over the whole screen
+        if let Some(ref mut diff) = self.diff_view {
+            // Compute diff for selected file if not cached
+            let _ = diff.get_current_diff();
+
+            diff.render(frame, area, theme);
+            return;
+        }
+
         // Layout: main area + status bar + optional update bar at bottom
         let constraints = if update_info.is_some() {
             vec![
@@ -591,6 +600,9 @@ impl HomeView {
             Span::styled("│", sep_style),
             Span::styled(" /", key_style),
             Span::styled(" Search ", desc_style),
+            Span::styled("│", sep_style),
+            Span::styled(" D", key_style),
+            Span::styled(" Diff ", desc_style),
             Span::styled("│", sep_style),
             Span::styled(" ?", key_style),
             Span::styled(" Help ", desc_style),
