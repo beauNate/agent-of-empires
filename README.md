@@ -53,6 +53,9 @@ curl -fsSL \
 # Homebrew
 brew install aoe
 
+# Nix
+nix run github:njbrake/agent-of-empires
+
 # Build from source
 git clone https://github.com/njbrake/agent-of-empires
 cd agent-of-empires && cargo build --release
